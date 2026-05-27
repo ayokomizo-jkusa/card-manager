@@ -1,0 +1,2102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CardMgr">
+<meta name="theme-color" content="#0a0a0f">
+<link rel="manifest" href="manifest.json">
+<title>Card Manager</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #12121a;
+  --bg3: #1a1a26;
+  --border: #2a2a3e;
+  --text: #e8e8f0;
+  --text2: #8888aa;
+  --text3: #555577;
+  --accent: #7c6af7;
+  --accent2: #a599ff;
+  --red: #ff4d6d;
+  --yellow: #ffb830;
+  --green: #2dce89;
+  --mono: 'DM Mono', monospace;
+  --sans: 'Syne', sans-serif;
+  --radius: 16px;
+  --radius-sm: 10px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden;
+}
+
+/* ── SCREENS ── */
+.screen { display: none; min-height: 100vh; min-height: 100dvh; }
+.screen.active { display: flex; flex-direction: column; }
+
+/* ── SETUP SCREEN ── */
+#setup-screen {
+  padding: 0;
+  background: var(--bg);
+}
+
+.setup-header {
+  padding: 60px 24px 32px;
+  background: linear-gradient(180deg, #1a1230 0%, var(--bg) 100%);
+}
+
+.setup-header h1 {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 6px;
+}
+
+.setup-header h1 span { color: var(--accent2); }
+
+.setup-header p {
+  color: var(--text2);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.setup-step {
+  padding: 0 24px;
+  flex: 1;
+}
+
+.step-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  margin-top: 32px;
+}
+
+/* GAS URL Setup */
+.gas-setup-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.gas-setup-card h3 {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.gas-setup-card p {
+  font-size: 13px;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 16px;
+}
+
+.gas-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.gas-input:focus { border-color: var(--accent); }
+.gas-input::placeholder { color: var(--text2); }
+
+.skip-btn {
+  background: none;
+  border: none;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+  margin-top: 10px;
+  padding: 4px 0;
+}
+
+/* Card selection */
+.card-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 100px;
+}
+
+.preset-card {
+  background: var(--bg2);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.preset-card.selected {
+  border-color: var(--accent);
+  background: #1a1535;
+}
+
+.card-color-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.preset-card-info { flex: 1; }
+
+.preset-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.preset-card-fee {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.preset-card-check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.preset-card.selected .preset-card-check {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.preset-card-check svg { display: none; }
+.preset-card.selected .preset-card-check svg { display: block; }
+
+/* Date input modal */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+}
+
+.modal-overlay.active { display: flex; }
+
+.modal-sheet {
+  background: var(--bg2);
+  border-radius: 24px 24px 0 0;
+  padding: 24px 24px 40px;
+  width: 100%;
+  border-top: 1px solid var(--border);
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-handle {
+  width: 36px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
+  margin: 0 auto 20px;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus { border-color: var(--accent); }
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* Buttons */
+.btn-primary {
+  width: 100%;
+  background: var(--accent);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 15px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: opacity 0.2s;
+}
+
+.btn-primary:active { opacity: 0.85; }
+
+.btn-secondary {
+  width: 100%;
+  background: transparent;
+  color: var(--text2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 15px;
+  font-family: var(--sans);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: all 0.2s;
+}
+
+/* Fixed bottom bar */
+.fixed-bottom {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px 34px;
+  background: linear-gradient(180deg, transparent 0%, var(--bg) 40%);
+  z-index: 50;
+}
+
+/* ── MAIN SCREEN ── */
+#main-screen { background: var(--bg); }
+
+.main-header {
+  padding: 54px 20px 0;
+  background: var(--bg);
+}
+
+.header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.header-top h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+
+.header-top h1 span { color: var(--accent2); }
+
+.icon-btn {
+  width: 38px;
+  height: 38px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: none;
+}
+
+/* Alert banner */
+.alert-banner {
+  margin: 0 20px 16px;
+  background: linear-gradient(135deg, #3d1a2e, #2a1535);
+  border: 1px solid #ff4d6d44;
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: none;
+}
+
+.alert-banner.active { display: block; }
+
+.alert-banner-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--red);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  font-family: var(--mono);
+  margin-bottom: 8px;
+}
+
+.alert-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid #ffffff08;
+  cursor: pointer;
+}
+
+.alert-item:last-child { border-bottom: none; }
+
+.alert-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--red);
+  flex-shrink: 0;
+}
+
+.alert-item-text {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.alert-item-days {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--red);
+}
+
+/* Tab bar */
+.tab-scroll {
+  display: flex;
+  gap: 8px;
+  padding: 0 20px 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tab-scroll::-webkit-scrollbar { display: none; }
+
+.tab-btn {
+  flex-shrink: 0;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 7px 14px;
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tab-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+
+.tab-badge {
+  background: var(--red);
+  color: white;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 100px;
+  padding: 1px 5px;
+  min-width: 16px;
+  text-align: center;
+}
+
+.tab-btn.active .tab-badge { background: rgba(255,255,255,0.3); }
+
+/* Main content */
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 20px 100px;
+}
+
+/* Card panel */
+.card-panel { display: none; }
+.card-panel.active { display: block; }
+
+/* Annual fee section */
+.section-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin: 20px 0 10px;
+}
+
+.fee-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px 18px;
+  margin-bottom: 10px;
+}
+
+.fee-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.fee-card-name {
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fee-amount {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--text2);
+}
+
+.fee-dates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.fee-date-item {}
+
+.fee-date-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.fee-date-value {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.status-pill.green { background: #0d2e1e; color: var(--green); border: 1px solid #2dce8930; }
+.status-pill.yellow { background: #2e1e00; color: var(--yellow); border: 1px solid #ffb83030; }
+.status-pill.red { background: #2e0d12; color: var(--red); border: 1px solid #ff4d6d30; }
+
+.fee-note-input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 13px;
+  outline: none;
+  resize: none;
+  min-height: 36px;
+}
+
+.fee-note-input:focus { border-color: var(--accent); color: var(--text); }
+
+/* Benefits section */
+.benefit-period-group { margin-bottom: 16px; }
+
+.period-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.benefit-item {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.benefit-item.checked {
+  background: #0d1a12;
+  border-color: #2dce8930;
+}
+
+.benefit-check {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.benefit-item.checked .benefit-check {
+  background: var(--green);
+  border-color: var(--green);
+}
+
+.benefit-info { flex: 1; }
+
+.benefit-name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.benefit-item.checked .benefit-name {
+  color: var(--text2);
+  text-decoration: line-through;
+}
+
+.benefit-amount {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+}
+
+.benefit-deadline {
+  font-family: var(--mono);
+  font-size: 11px;
+  text-align: right;
+}
+
+.benefit-deadline.urgent { color: var(--red); }
+.benefit-deadline.warning { color: var(--yellow); }
+.benefit-deadline.ok { color: var(--text2); }
+
+/* History section */
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  flex-shrink: 0;
+}
+
+.history-text { flex: 1; font-size: 13px; color: var(--text2); }
+.history-text strong { color: var(--text); }
+.history-date { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+
+/* Bottom nav */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  display: flex;
+  padding: 10px 0 28px;
+  z-index: 50;
+}
+
+.nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 0;
+}
+
+.nav-btn svg { color: var(--text2); transition: color 0.2s; }
+.nav-btn span { font-size: 10px; color: var(--text2); font-family: var(--mono); transition: color 0.2s; }
+.nav-btn.active svg, .nav-btn.active span { color: var(--accent2); }
+
+/* Settings screen */
+#settings-screen { background: var(--bg); }
+
+.settings-header {
+  padding: 60px 24px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.settings-header h2 { font-size: 22px; font-weight: 800; }
+
+.settings-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 100px;
+}
+
+.settings-section {
+  margin-bottom: 28px;
+}
+
+.settings-section-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text2);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.settings-row {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  cursor: pointer;
+}
+
+.settings-row-label { font-size: 14px; font-weight: 600; }
+.settings-row-value { font-family: var(--mono); font-size: 13px; color: var(--text2); }
+
+.settings-card-row {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+.settings-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.settings-card-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.card-action-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--text2);
+  transition: all 0.15s;
+}
+
+.card-action-btn:active { opacity: 0.7; }
+.card-action-btn.danger { color: var(--red); border-color: var(--red); }
+
+.notify-days-input {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 14px;
+  width: 60px;
+  text-align: center;
+  outline: none;
+}
+
+.gas-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.gas-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.gas-status-dot.connected { background: var(--green); }
+.gas-status-dot.disconnected { background: var(--red); }
+
+/* History screen */
+#history-screen { background: var(--bg); }
+
+.history-header {
+  padding: 60px 24px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.history-header h2 { font-size: 22px; font-weight: 800; }
+
+.history-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px 100px;
+}
+
+.history-month-group { margin-bottom: 24px; }
+
+.history-month-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.history-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-card-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.history-card-text { flex: 1; }
+.history-card-name { font-size: 13px; font-weight: 600; }
+.history-card-benefit { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.history-card-date { font-family: var(--mono); font-size: 11px; color: var(--text2); }
+
+/* Notification permission banner */
+.notif-banner {
+  margin: 0 20px 16px;
+  background: linear-gradient(135deg, #1a1535, #120d2e);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.notif-banner-text { flex: 1; }
+.notif-banner-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+.notif-banner-sub { font-size: 12px; color: var(--text2); }
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  z-index: 200;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Loading */
+.loading-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+}
+
+.loading-logo {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+}
+
+.loading-logo span { color: var(--accent2); }
+
+.loading-sub {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text2);
+  letter-spacing: 2px;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-top: 24px;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text2);
+}
+
+.empty-state-icon { font-size: 40px; margin-bottom: 12px; }
+.empty-state h3 { font-size: 16px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.empty-state p { font-size: 13px; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="loading-logo">Card<span>Mgr</span></div>
+  <div class="loading-sub">LOADING</div>
+  <div class="spinner"></div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- ═══════════════════════════════════════════
+     SETUP SCREEN
+═══════════════════════════════════════════ -->
+<div class="screen" id="setup-screen">
+  <div class="setup-header">
+    <h1>Card<span>Mgr</span></h1>
+    <p>クレジットカード特典管理</p>
+  </div>
+
+  <div class="setup-step" id="step-gas">
+    <div class="step-label">Step 1 — データ保存先</div>
+    <div class="gas-setup-card">
+      <h3>Google Apps Script URL</h3>
+      <p>データをGoogleスプレッドシートに保存するためにURLを入力してください。スキップするとローカル保存になります。</p>
+      <input class="gas-input" id="gas-url-input" type="url" placeholder="https://script.google.com/macros/s/..." autocomplete="off">
+      <button class="btn-primary" onclick="saveGasUrl()">保存して次へ</button>
+      <br>
+      <button class="skip-btn" onclick="skipGas()">スキップ（ローカル保存）</button>
+    </div>
+  </div>
+
+  <div class="setup-step" id="step-cards" style="display:none;">
+    <div class="step-label">Step 2 — カードを選択</div>
+    <div class="card-grid" id="preset-card-grid"></div>
+  </div>
+
+  <div class="fixed-bottom" id="step-cards-footer" style="display:none;">
+    <button class="btn-primary" id="cards-next-btn" onclick="openDateModal()" disabled>
+      入会日を設定 →
+    </button>
+  </div>
+</div>
+
+<!-- Card edit modal -->
+<div class="modal-overlay" id="edit-card-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="edit-modal-title">カードを編集</div>
+    <input type="hidden" id="edit-card-id">
+    <div class="form-group">
+      <label class="form-label">入会日</label>
+      <input class="form-input" type="date" id="edit-join-date">
+    </div>
+    <div class="form-group">
+      <label class="form-label">解約目安（残り何日前に警告）</label>
+      <input class="form-input" type="number" id="edit-alert-days" min="7" max="365">
+    </div>
+    <button class="btn-primary" onclick="saveEditCard()">保存</button>
+  </div>
+</div>
+
+<!-- Date input modal -->
+<div class="modal-overlay" id="date-modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="date-modal-title">入会日を設定</div>
+    <div id="date-modal-cards"></div>
+    <button class="btn-primary" onclick="finishSetup()">完了 →</button>
+    <button class="btn-secondary" onclick="closeModal()">戻る</button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     MAIN SCREEN
+═══════════════════════════════════════════ -->
+<div class="screen" id="main-screen">
+  <div class="main-header">
+    <div class="header-top">
+      <h1>Card<span>Mgr</span></h1>
+      <button class="icon-btn" onclick="showScreen('settings-screen')">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Notification permission banner -->
+  <div class="notif-banner" id="notif-banner" style="display:none;" onclick="requestNotifPermission()">
+    <svg width="20" height="20" fill="none" stroke="var(--accent2)" stroke-width="2" viewBox="0 0 24 24">
+      <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+    </svg>
+    <div class="notif-banner-text">
+      <div class="notif-banner-title">通知を有効にする</div>
+      <div class="notif-banner-sub">期限前にリマインダーを受け取る</div>
+    </div>
+    <svg width="16" height="16" fill="none" stroke="var(--text2)" stroke-width="2" viewBox="0 0 24 24">
+      <polyline points="9 18 15 12 9 6"/>
+    </svg>
+  </div>
+
+  <!-- Alert banner -->
+  <div class="alert-banner" id="alert-banner">
+    <div class="alert-banner-title">⚠ 期限が近い特典</div>
+    <div id="alert-list"></div>
+  </div>
+
+  <!-- Tab scroll -->
+  <div class="tab-scroll" id="tab-scroll"></div>
+
+  <!-- Card panels -->
+  <div class="main-content" id="card-panels"></div>
+
+  <!-- Bottom nav -->
+  <nav class="bottom-nav">
+    <button class="nav-btn active" id="nav-home" onclick="switchNav('home')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>HOME</span>
+    </button>
+    <button class="nav-btn" id="nav-history" onclick="switchNav('history')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 8 8 8"/></svg>
+      <span>HISTORY</span>
+    </button>
+    <button class="nav-btn" id="nav-settings" onclick="switchNav('settings')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>SETTINGS</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     HISTORY SCREEN
+═══════════════════════════════════════════ -->
+<div class="screen" id="history-screen">
+  <div class="history-header">
+    <h2>履歴</h2>
+  </div>
+  <div class="history-content" id="history-content"></div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" id="nav-home2" onclick="switchNav('home')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>HOME</span>
+    </button>
+    <button class="nav-btn active" id="nav-history2" onclick="switchNav('history')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 8 8 8"/></svg>
+      <span>HISTORY</span>
+    </button>
+    <button class="nav-btn" id="nav-settings2" onclick="switchNav('settings')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>SETTINGS</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ═══════════════════════════════════════════
+     SETTINGS SCREEN
+═══════════════════════════════════════════ -->
+<div class="screen" id="settings-screen">
+  <div class="settings-header">
+    <h2>設定</h2>
+  </div>
+  <div class="settings-content">
+
+    <div class="settings-section">
+      <div class="settings-section-title">通知設定</div>
+      <div class="settings-row">
+        <div class="settings-row-label">デフォルト通知日数</div>
+        <input class="notify-days-input" id="default-notify-days" type="number" min="1" max="30" value="3" onchange="saveSettings()">
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">データ保存</div>
+      <div class="settings-row" onclick="editGasUrl()">
+        <div class="settings-row-label">Google Apps Script</div>
+        <div class="gas-status" id="gas-status-display">
+          <div class="gas-status-dot disconnected" id="gas-dot"></div>
+          <span id="gas-status-text">未設定</span>
+        </div>
+      </div>
+      <div class="settings-row" onclick="syncNow()">
+        <div class="settings-row-label">今すぐ同期</div>
+        <div class="settings-row-value">→</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">カード管理</div>
+      <div id="settings-cards-list"></div>
+      <div class="settings-row" onclick="showScreen('setup-screen'); showStep('step-cards')">
+        <div class="settings-row-label">カードを追加</div>
+        <div class="settings-row-value">+</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-title">データ</div>
+      <div class="settings-row" onclick="clearAllData()">
+        <div class="settings-row-label" style="color:var(--red)">全データをリセット</div>
+        <div class="settings-row-value">⚠</div>
+      </div>
+    </div>
+
+  </div>
+  <nav class="bottom-nav">
+    <button class="nav-btn" id="nav-home3" onclick="switchNav('home')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>HOME</span>
+    </button>
+    <button class="nav-btn" id="nav-history3" onclick="switchNav('history')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="12 8 12 12 14 14"/><path d="M3.05 11a9 9 0 1 0 .5-4"/><polyline points="3 3 3 8 8 8"/></svg>
+      <span>HISTORY</span>
+    </button>
+    <button class="nav-btn active" id="nav-settings3" onclick="switchNav('settings')">
+      <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      <span>SETTINGS</span>
+    </button>
+  </nav>
+</div>
+
+<script>
+// ═══════════════════════════════════════════
+// DATA: Card Presets
+// ═══════════════════════════════════════════
+const CARD_PRESETS = [
+  {
+    id: 'amex_gold',
+    name: 'Amex Gold',
+    issuer: 'American Express',
+    annualFee: 325,
+    color: '#c9a84c',
+    benefits: [
+      { id: 'uber_cash', name: 'Uber Cash', amount: '$10', period: 'monthly', description: 'Uber / Uber Eats' },
+      { id: 'dining_credit', name: 'Dining Credit', amount: '$10', period: 'monthly', description: 'Grubhub, Cheesecake Factory等' },
+      { id: 'dunkin_credit', name: "Dunkin' Credit", amount: '$7', period: 'monthly', description: 'Dunkin\'' },
+      { id: 'resy_credit', name: 'Resy Credit', amount: '$50', period: 'semi-annual', description: 'Resy経由の予約' },
+      { id: 'hotel_collection', name: 'Hotel Collection Credit', amount: '$100', period: 'annual', description: '2泊以上の滞在' },
+      { id: 'uber_one', name: 'Uber One Credit', amount: '$96', period: 'limited', description: '〜2026/10/30', expiry: '2026-10-30' },
+    ]
+  },
+  {
+    id: 'chase_csp',
+    name: 'Chase Sapphire Preferred',
+    issuer: 'Chase',
+    annualFee: 95,
+    color: '#1a6bcc',
+    benefits: [
+      { id: 'doordash_credit', name: 'DoorDash Credit', amount: '$10', period: 'monthly', description: 'DashPass会員向け' },
+      { id: 'chase_hotel', name: 'Chase Travel Hotel Credit', amount: '$50', period: 'annual', description: 'Chase Travel経由のホテル予約' },
+    ]
+  },
+  {
+    id: 'hilton_aspire',
+    name: 'Hilton Aspire',
+    issuer: 'American Express',
+    annualFee: 550,
+    color: '#1a4a7a',
+    benefits: [
+      { id: 'flight_credit', name: 'Flight Credit', amount: '$50', period: 'quarterly', description: '航空会社直接 or Amex Travel' },
+      { id: 'resort_credit', name: 'Resort Credit', amount: '$200', period: 'semi-annual', description: '参加Hiltonリゾート' },
+      { id: 'clear_credit', name: 'CLEAR+ Credit', amount: '$209', period: 'annual', description: 'CLEAR+メンバーシップ' },
+      { id: 'free_night', name: 'Free Night Reward', amount: '-', period: 'annual', description: '更新時に付与' },
+    ]
+  },
+  {
+    id: 'bilt_blue',
+    name: 'Bilt Blue',
+    issuer: 'Bilt',
+    annualFee: 0,
+    color: '#2dce89',
+    benefits: [
+      { id: 'bilt_cash', name: 'Bilt Cash', amount: '$200', period: 'annual', description: '毎年1/1付与' },
+    ]
+  },
+  {
+    id: 'delta_gold',
+    name: 'Delta SkyMiles Gold',
+    issuer: 'American Express',
+    annualFee: 150,
+    color: '#c0392b',
+    benefits: [
+      { id: 'delta_stays', name: 'Delta Stays Credit', amount: '$100', period: 'annual', description: 'delta.com経由のホテル予約' },
+      { id: 'delta_flight', name: 'Flight Credit ($10K条件)', amount: '$200', period: 'annual', description: '年間$10,000利用が条件' },
+    ]
+  },
+  {
+    id: 'atmos_ascent',
+    name: 'Atmos Rewards Ascent',
+    issuer: 'Bank of America',
+    annualFee: 95,
+    color: '#00a651',
+    benefits: [
+      { id: 'companion_fare', name: 'Companion Fare ($6K条件)', amount: '-', period: 'annual', description: '前年に$6,000以上利用で獲得' },
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════
+// APP STATE
+// ═══════════════════════════════════════════
+let appState = {
+  cards: [],        // user's added cards with dates
+  checks: {},       // { cardId_benefitId_period: { checked: bool, checkedAt: string } }
+  history: [],      // [ { date, cardId, cardName, benefitId, benefitName, period, action } ]
+  settings: {
+    gasUrl: '',
+    defaultNotifyDays: 3,
+    notifPermission: 'default'
+  }
+};
+
+let selectedPresets = new Set();
+let currentTab = null;
+
+// ═══════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════
+window.addEventListener('load', async () => {
+  // Register SW
+  if ('serviceWorker' in navigator) {
+    try {
+      await navigator.serviceWorker.register('./sw.js');
+    } catch(e) {}
+  }
+
+  // Load data
+  loadFromLocal();
+  
+  setTimeout(async () => {
+    document.getElementById('loading').style.display = 'none';
+    
+    if (appState.cards.length === 0) {
+      showScreen('setup-screen');
+      showStep('step-gas');
+    } else {
+      await syncFromGas();
+      renderMain();
+      showScreen('main-screen');
+      checkNotifications();
+    }
+  }, 800);
+});
+
+// ═══════════════════════════════════════════
+// LOCAL STORAGE
+// ═══════════════════════════════════════════
+function saveToLocal() {
+  localStorage.setItem('cardmgr_state', JSON.stringify(appState));
+}
+
+function loadFromLocal() {
+  const saved = localStorage.getItem('cardmgr_state');
+  if (saved) {
+    try {
+      appState = { ...appState, ...JSON.parse(saved) };
+    } catch(e) {}
+  }
+}
+
+// ═══════════════════════════════════════════
+// GAS SYNC
+// ═══════════════════════════════════════════
+async function syncToGas() {
+  if (!appState.settings.gasUrl) return;
+  try {
+    await fetch(appState.settings.gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ action: 'saveData', data: appState })
+    });
+  } catch(e) {}
+}
+
+async function syncFromGas() {
+  if (!appState.settings.gasUrl) return;
+  try {
+    const res = await fetch(appState.settings.gasUrl + '?action=getData');
+    const json = await res.json();
+    if (json.success && json.data) {
+      appState = { ...appState, ...json.data };
+      saveToLocal();
+    }
+  } catch(e) {}
+}
+
+async function syncNow() {
+  showToast('同期中...');
+  await syncToGas();
+  showToast('✓ 同期完了');
+}
+
+// ═══════════════════════════════════════════
+// SETUP FLOW
+// ═══════════════════════════════════════════
+function showStep(stepId) {
+  document.getElementById('step-gas').style.display = 'none';
+  document.getElementById('step-cards').style.display = 'none';
+  document.getElementById('step-cards-footer').style.display = 'none';
+  
+  document.getElementById(stepId).style.display = 'block';
+  if (stepId === 'step-cards') {
+    document.getElementById('step-cards-footer').style.display = 'block';
+    renderPresetCards();
+  }
+}
+
+function saveGasUrl() {
+  const url = document.getElementById('gas-url-input').value.trim();
+  if (url) {
+    appState.settings.gasUrl = url;
+    saveToLocal();
+  }
+  showStep('step-cards');
+}
+
+function skipGas() {
+  showStep('step-cards');
+}
+
+function renderPresetCards() {
+  const grid = document.getElementById('preset-card-grid');
+  grid.innerHTML = CARD_PRESETS.map(card => {
+    const isAdded = appState.cards.some(c => c.id === card.id);
+    const isSelected = selectedPresets.has(card.id);
+    return `
+      <div class="preset-card ${isSelected || isAdded ? 'selected' : ''} ${isAdded ? 'opacity-50' : ''}" 
+           onclick="togglePreset('${card.id}')" id="preset-${card.id}">
+        <div class="card-color-dot" style="background:${card.color}"></div>
+        <div class="preset-card-info">
+          <div class="preset-card-name">${card.name}</div>
+          <div class="preset-card-fee">${card.annualFee === 0 ? 'No Annual Fee' : '$' + card.annualFee + '/yr'}</div>
+        </div>
+        <div class="preset-card-check">
+          <svg width="12" height="12" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </div>
+      </div>
+    `;
+  }).join('');
+  updateCardsNextBtn();
+}
+
+function togglePreset(cardId) {
+  if (appState.cards.some(c => c.id === cardId)) {
+    showToast('既に追加済みです');
+    return;
+  }
+  if (selectedPresets.has(cardId)) {
+    selectedPresets.delete(cardId);
+  } else {
+    selectedPresets.add(cardId);
+  }
+  const el = document.getElementById(`preset-${cardId}`);
+  el.classList.toggle('selected', selectedPresets.has(cardId));
+  updateCardsNextBtn();
+}
+
+function updateCardsNextBtn() {
+  const btn = document.getElementById('cards-next-btn');
+  btn.disabled = selectedPresets.size === 0;
+}
+
+function openDateModal() {
+  if (selectedPresets.size === 0) return;
+  
+  const container = document.getElementById('date-modal-cards');
+  container.innerHTML = [...selectedPresets].map(cardId => {
+    const preset = CARD_PRESETS.find(c => c.id === cardId);
+    return `
+      <div style="margin-bottom:20px; padding-bottom:20px; border-bottom:1px solid var(--border);">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+          <div class="card-color-dot" style="background:${preset.color}"></div>
+          <strong style="font-size:15px;">${preset.name}</strong>
+        </div>
+        <div class="form-group">
+          <label class="form-label">入会日</label>
+          <input class="form-input" type="date" id="join-${cardId}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">解約/交渉の目安（請求の何日前）</label>
+          <input class="form-input" type="number" id="alert-${cardId}" value="30" min="1" max="365" placeholder="30">
+        </div>
+      </div>
+    `;
+  }).join('');
+  
+  document.getElementById('date-modal').classList.add('active');
+}
+
+function closeModal() {
+  document.getElementById('date-modal').classList.remove('active');
+}
+
+function finishSetup() {
+  const newCards = [];
+  for (const cardId of selectedPresets) {
+    const preset = CARD_PRESETS.find(c => c.id === cardId);
+    const joinDate = document.getElementById(`join-${cardId}`)?.value;
+    const feeDate = document.getElementById(`fee-${cardId}`)?.value;
+    const alertDays = document.getElementById(`alert-${cardId}`)?.value || 30;
+    
+    if (!joinDate) {
+      showToast('入会日を入力してください');
+      return;
+    }
+    
+    newCards.push({
+      id: preset.id,
+      name: preset.name,
+      color: preset.color,
+      annualFee: preset.annualFee,
+      joinDate,
+      feeDate: feeDate || '',
+      alertDays: parseInt(alertDays),
+      notifyDays: appState.settings.defaultNotifyDays
+    });
+  }
+  
+  appState.cards.push(...newCards);
+  saveToLocal();
+  syncToGas();
+  selectedPresets.clear();
+  closeModal();
+  
+  renderMain();
+  showScreen('main-screen');
+  showToast('✓ カードを追加しました');
+  
+  // Request notification permission
+  setTimeout(checkNotifPermission, 1000);
+}
+
+// ═══════════════════════════════════════════
+// MAIN RENDER
+// ═══════════════════════════════════════════
+function renderMain() {
+  renderTabs();
+  renderPanels();
+  renderAlerts();
+  renderGasStatus();
+  renderHistory();
+  updateCurrentPeriodChecks();
+}
+
+function renderTabs() {
+  const tabScroll = document.getElementById('tab-scroll');
+  tabScroll.innerHTML = appState.cards.map((card, i) => {
+    const urgentCount = getUrgentBenefitsForCard(card).length;
+    return `
+      <button class="tab-btn ${i === 0 ? 'active' : ''}" 
+              id="tab-${card.id}" 
+              onclick="switchTab('${card.id}')">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${card.color};"></span>
+        ${card.name}
+        ${urgentCount > 0 ? `<span class="tab-badge">${urgentCount}</span>` : ''}
+      </button>
+    `;
+  }).join('');
+  
+  if (appState.cards.length > 0 && !currentTab) {
+    currentTab = appState.cards[0].id;
+  }
+  updateActiveTab();
+}
+
+function switchTab(cardId) {
+  currentTab = cardId;
+  updateActiveTab();
+}
+
+function updateActiveTab() {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.card-panel').forEach(p => p.classList.remove('active'));
+  
+  const activeTab = document.getElementById(`tab-${currentTab}`);
+  const activePanel = document.getElementById(`panel-${currentTab}`);
+  if (activeTab) activeTab.classList.add('active');
+  if (activePanel) activePanel.classList.add('active');
+}
+
+function renderPanels() {
+  const container = document.getElementById('card-panels');
+  container.innerHTML = appState.cards.map(card => {
+    const preset = CARD_PRESETS.find(c => c.id === card.id);
+    return `<div class="card-panel" id="panel-${card.id}">
+      ${renderFeeSection(card)}
+      ${renderBenefitsSection(card, preset)}
+    </div>`;
+  }).join('');
+  
+  updateActiveTab();
+}
+
+function getNextFeeDate(card) {
+  // feeDateが設定されていれば使う、なければ入会日の毎年記念日を計算
+  if (card.feeDate) return new Date(card.feeDate);
+  if (!card.joinDate) return null;
+  const join = new Date(card.joinDate);
+  const today = new Date();
+  const next = new Date(join);
+  next.setFullYear(today.getFullYear());
+  if (next <= today) next.setFullYear(today.getFullYear() + 1);
+  return next;
+}
+
+function renderFeeSection(card) {
+  const today = new Date();
+  const feeDate = getNextFeeDate(card);
+  const daysUntilFee = feeDate ? Math.ceil((feeDate - today) / (1000 * 60 * 60 * 24)) : null;
+  
+  let statusClass = 'green';
+  let statusText = '余裕あり';
+  
+  if (daysUntilFee !== null) {
+    if (daysUntilFee <= card.alertDays) {
+      statusClass = 'red';
+      statusText = `${daysUntilFee}日後`;
+    } else if (daysUntilFee <= card.alertDays * 2) {
+      statusClass = 'yellow';
+      statusText = `${daysUntilFee}日後`;
+    } else {
+      statusText = `${daysUntilFee}日後`;
+    }
+  }
+  
+  return `
+    <div class="section-title">年会費</div>
+    <div class="fee-card">
+      <div class="fee-card-header">
+        <div class="fee-card-name">
+          <div style="width:10px;height:10px;border-radius:50%;background:${card.color}"></div>
+          ${card.name}
+        </div>
+        <div class="fee-amount">${card.annualFee === 0 ? 'No Fee' : '$' + card.annualFee}</div>
+      </div>
+      <div class="fee-dates">
+        <div class="fee-date-item">
+          <div class="fee-date-label">入会日</div>
+          <div class="fee-date-value">${formatDate(card.joinDate)}</div>
+        </div>
+        <div class="fee-date-item">
+          <div class="fee-date-label">次回請求日</div>
+          <div class="fee-date-value">${feeDate ? formatDate(feeDate.toISOString().split('T')[0]) : '—'}</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <span class="status-pill ${statusClass}">
+          <span>●</span> ${statusText}
+        </span>
+        <span style="font-family:var(--mono);font-size:11px;color:var(--text2);">
+          解約目安: ${card.alertDays}日前
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+function renderBenefitsSection(card, preset) {
+  if (!preset) return '';
+  
+  const periods = ['monthly', 'quarterly', 'semi-annual', 'annual', 'limited'];
+  const periodLabels = {
+    'monthly': '毎月',
+    'quarterly': '四半期',
+    'semi-annual': '半期',
+    'annual': '年次',
+    'limited': '期間限定'
+  };
+  
+  let html = '<div class="section-title">特典チェック</div>';
+  
+  periods.forEach(period => {
+    const benefits = preset.benefits.filter(b => b.period === period);
+    if (benefits.length === 0) return;
+    
+    html += `<div class="benefit-period-group">
+      <div class="period-label">${periodLabels[period]}</div>`;
+    
+    benefits.forEach(benefit => {
+      const checkKey = getCheckKey(card.id, benefit.id, period);
+      const checkData = appState.checks[checkKey];
+      const isChecked = checkData?.checked || false;
+      const daysLeft = getDaysLeftInPeriod(period, benefit.expiry);
+      
+      let deadlineClass = 'ok';
+      let deadlineText = `残${daysLeft}日`;
+      
+      if (period === 'limited' && benefit.expiry) {
+        const expDays = Math.ceil((new Date(benefit.expiry) - new Date()) / 86400000);
+        deadlineText = `残${expDays}日`;
+        if (expDays <= 3) deadlineClass = 'urgent';
+        else if (expDays <= 7) deadlineClass = 'warning';
+      } else {
+        if (daysLeft <= 3) deadlineClass = 'urgent';
+        else if (daysLeft <= 7) deadlineClass = 'warning';
+      }
+      
+      const safeCardName = card.name.replace(/'/g, "\\'");
+      const safeBenefitName = benefit.name.replace(/'/g, "\\'");
+      html += `
+        <div class="benefit-item ${isChecked ? 'checked' : ''}"
+             onclick="toggleBenefit('${card.id}', '${benefit.id}', '${period}', '${safeCardName}', '${safeBenefitName}')">
+          <div class="benefit-check">
+            ${isChecked ? `<svg width="12" height="12" fill="none" stroke="white" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>` : ''}
+          </div>
+          <div class="benefit-info">
+            <div class="benefit-name">${benefit.name}</div>
+            <div class="benefit-amount">${benefit.amount} — ${benefit.description}</div>
+          </div>
+          ${!isChecked ? `<div class="benefit-deadline ${deadlineClass}">${deadlineText}</div>` : 
+            `<div class="benefit-deadline ok">✓</div>`}
+        </div>`;
+    });
+    
+    html += '</div>';
+  });
+  
+  return html;
+}
+
+// ═══════════════════════════════════════════
+// BENEFIT CHECK LOGIC
+// ═══════════════════════════════════════════
+function getCheckKey(cardId, benefitId, period) {
+  const periodKey = getCurrentPeriodKey(period);
+  return `${cardId}_${benefitId}_${periodKey}`;
+}
+
+function getCurrentPeriodKey(period) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth() + 1;
+  const q = Math.ceil(m / 3);
+  const h = m <= 6 ? 1 : 2;
+  
+  switch(period) {
+    case 'monthly': return `${y}-${String(m).padStart(2,'0')}`;
+    case 'quarterly': return `${y}-Q${q}`;
+    case 'semi-annual': return `${y}-H${h}`;
+    case 'annual': return `${y}`;
+    case 'limited': return `limited`;
+    default: return `${y}`;
+  }
+}
+
+function getDaysLeftInPeriod(period) {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  
+  let endDate;
+  switch(period) {
+    case 'monthly':
+      endDate = new Date(y, m + 1, 0);
+      break;
+    case 'quarterly': {
+      const q = Math.floor(m / 3);
+      endDate = new Date(y, (q + 1) * 3, 0);
+      break;
+    }
+    case 'semi-annual':
+      endDate = m < 6 ? new Date(y, 5, 30) : new Date(y, 11, 31);
+      break;
+    case 'annual':
+      endDate = new Date(y, 11, 31);
+      break;
+    default:
+      return 999;
+  }
+  
+  return Math.ceil((endDate - now) / 86400000);
+}
+
+function toggleBenefit(cardId, benefitId, period, cardName, benefitName) {
+  const checkKey = getCheckKey(cardId, benefitId, period);
+  const current = appState.checks[checkKey];
+  const isChecked = current?.checked || false;
+  
+  appState.checks[checkKey] = {
+    checked: !isChecked,
+    checkedAt: new Date().toISOString()
+  };
+  
+  // Add to history
+  if (!isChecked) {
+    appState.history.unshift({
+      date: new Date().toISOString(),
+      cardId,
+      cardName,
+      benefitId,
+      benefitName,
+      period,
+      action: 'checked'
+    });
+  }
+  
+  saveToLocal();
+  syncToGas();
+  renderMain();
+  
+  if (!isChecked) {
+    showToast(`✓ ${benefitName}`);
+  }
+}
+
+// ═══════════════════════════════════════════
+// ALERTS
+// ═══════════════════════════════════════════
+function getUrgentBenefitsForCard(card) {
+  const preset = CARD_PRESETS.find(c => c.id === card.id);
+  if (!preset) return [];
+  
+  const notifyDays = card.notifyDays || appState.settings.defaultNotifyDays;
+  const urgent = [];
+  
+  preset.benefits.forEach(benefit => {
+    const checkKey = getCheckKey(card.id, benefit.id, benefit.period);
+    const isChecked = appState.checks[checkKey]?.checked || false;
+    if (isChecked) return;
+    
+    let daysLeft;
+    if (benefit.period === 'limited' && benefit.expiry) {
+      daysLeft = Math.ceil((new Date(benefit.expiry) - new Date()) / 86400000);
+    } else {
+      daysLeft = getDaysLeftInPeriod(benefit.period);
+    }
+    
+    if (daysLeft <= notifyDays) {
+      urgent.push({ ...benefit, daysLeft, cardName: card.name, cardColor: card.color });
+    }
+  });
+  
+  return urgent;
+}
+
+function renderAlerts() {
+  const allUrgent = [];
+  appState.cards.forEach(card => {
+    allUrgent.push(...getUrgentBenefitsForCard(card));
+  });
+  
+  const banner = document.getElementById('alert-banner');
+  const list = document.getElementById('alert-list');
+  
+  if (allUrgent.length === 0) {
+    banner.classList.remove('active');
+    return;
+  }
+  
+  banner.classList.add('active');
+  list.innerHTML = allUrgent.slice(0, 5).map(b => `
+    <div class="alert-item">
+      <div class="alert-dot" style="background:${b.cardColor || 'var(--red)'}"></div>
+      <div class="alert-item-text">${b.cardName} — ${b.name}</div>
+      <div class="alert-item-days">残${b.daysLeft}日</div>
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════
+function renderHistory() {
+  const container = document.getElementById('history-content');
+  
+  if (appState.history.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <h3>履歴がありません</h3>
+        <p>特典を使ったらチェックすると<br>ここに記録されます</p>
+      </div>`;
+    return;
+  }
+  
+  // Group by month
+  const groups = {};
+  appState.history.forEach(item => {
+    const d = new Date(item.date);
+    const key = `${d.getFullYear()}年${d.getMonth()+1}月`;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(item);
+  });
+  
+  container.innerHTML = Object.entries(groups).map(([month, items]) => `
+    <div class="history-month-group">
+      <div class="history-month-label">${month}</div>
+      ${items.map(item => {
+        const preset = CARD_PRESETS.find(c => c.id === item.cardId);
+        const color = preset?.color || '#888';
+        return `
+          <div class="history-card">
+            <div class="history-card-dot" style="background:${color}"></div>
+            <div class="history-card-text">
+              <div class="history-card-name">${item.cardName}</div>
+              <div class="history-card-benefit">${item.benefitName}</div>
+            </div>
+            <div class="history-card-date">${formatDateShort(item.date)}</div>
+          </div>`;
+      }).join('')}
+    </div>
+  `).join('');
+}
+
+// ═══════════════════════════════════════════
+// PERIOD AUTO-RESET
+// ═══════════════════════════════════════════
+function updateCurrentPeriodChecks() {
+  // Checks are keyed by period, so old periods are automatically irrelevant.
+  // No action needed - the key system handles this.
+}
+
+// ═══════════════════════════════════════════
+// NOTIFICATIONS
+// ═══════════════════════════════════════════
+function checkNotifPermission() {
+  if ('Notification' in window && Notification.permission === 'default') {
+    document.getElementById('notif-banner').style.display = 'flex';
+  }
+}
+
+async function requestNotifPermission() {
+  if (!('Notification' in window)) {
+    showToast('このブラウザは通知に対応していません');
+    return;
+  }
+  
+  const permission = await Notification.requestPermission();
+  appState.settings.notifPermission = permission;
+  saveToLocal();
+  
+  if (permission === 'granted') {
+    document.getElementById('notif-banner').style.display = 'none';
+    showToast('✓ 通知が有効になりました');
+    scheduleNotifications();
+  } else {
+    showToast('通知が拒否されました');
+  }
+}
+
+function checkNotifications() {
+  checkNotifPermission();
+  if (Notification.permission === 'granted') {
+    scheduleNotifications();
+  }
+}
+
+function scheduleNotifications() {
+  const allUrgent = [];
+  appState.cards.forEach(card => {
+    allUrgent.push(...getUrgentBenefitsForCard(card));
+  });
+  
+  if (allUrgent.length > 0 && 'serviceWorker' in navigator) {
+    navigator.serviceWorker.ready.then(reg => {
+      // Schedule daily check via setTimeout (re-triggers on app open)
+      allUrgent.forEach(benefit => {
+        reg.showNotification('CardMgr — 期限が近い特典', {
+          body: `${benefit.cardName}: ${benefit.name} — 残${benefit.daysLeft}日`,
+          icon: './icon-192.png',
+          tag: `${benefit.cardName}-${benefit.id}`,
+          requireInteraction: true
+        });
+      });
+    });
+  }
+  
+  // Re-check tomorrow
+  const tomorrow = new Date();
+  tomorrow.setHours(9, 0, 0, 0);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const msUntilTomorrow = tomorrow - new Date();
+  setTimeout(scheduleNotifications, msUntilTomorrow);
+}
+
+// ═══════════════════════════════════════════
+// SETTINGS
+// ═══════════════════════════════════════════
+function saveSettings() {
+  const days = parseInt(document.getElementById('default-notify-days').value) || 3;
+  appState.settings.defaultNotifyDays = days;
+  saveToLocal();
+  showToast('✓ 保存しました');
+}
+
+function renderGasStatus() {
+  const dot = document.getElementById('gas-dot');
+  const text = document.getElementById('gas-status-text');
+  if (!dot || !text) return;
+  
+  if (appState.settings.gasUrl) {
+    dot.className = 'gas-status-dot connected';
+    text.textContent = '接続済み';
+  } else {
+    dot.className = 'gas-status-dot disconnected';
+    text.textContent = '未設定';
+  }
+}
+
+function editGasUrl() {
+  const url = prompt('Google Apps Script URLを入力:', appState.settings.gasUrl || '');
+  if (url !== null) {
+    appState.settings.gasUrl = url;
+    saveToLocal();
+    renderGasStatus();
+    showToast('✓ URL保存しました');
+  }
+}
+
+function renderSettingsCards() {
+  const list = document.getElementById('settings-cards-list');
+  if (!list) return;
+  if (appState.cards.length === 0) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = appState.cards.map(card => `
+    <div class="settings-card-row">
+      <div class="settings-card-dot" style="background:${card.color}"></div>
+      <div class="settings-card-name">${card.name}</div>
+      <div class="settings-card-actions">
+        <button class="card-action-btn" onclick="editCard('${card.id}')" title="編集">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="card-action-btn danger" onclick="deleteCard('${card.id}')" title="削除">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+        </button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function editCard(cardId) {
+  const card = appState.cards.find(c => c.id === cardId);
+  if (!card) return;
+  document.getElementById('edit-card-id').value = cardId;
+  document.getElementById('edit-modal-title').textContent = card.name + ' を編集';
+  document.getElementById('edit-join-date').value = card.joinDate || '';
+  document.getElementById('edit-fee-date').value = card.feeDate || '';
+  document.getElementById('edit-alert-days').value = card.alertDays || 30;
+  document.getElementById('edit-card-modal').classList.add('active');
+}
+
+function saveEditCard() {
+  const cardId = document.getElementById('edit-card-id').value;
+  const card = appState.cards.find(c => c.id === cardId);
+  if (!card) return;
+  const joinDate = document.getElementById('edit-join-date').value;
+  if (!joinDate) { showToast('入会日を入力してください'); return; }
+  card.joinDate = joinDate;
+  card.feeDate = '';
+  card.alertDays = parseInt(document.getElementById('edit-alert-days').value) || 30;
+  document.getElementById('edit-card-modal').classList.remove('active');
+  saveToLocal();
+  syncToGas();
+  renderMain();
+  showToast('✓ 保存しました');
+}
+
+function deleteCard(cardId) {
+  const card = appState.cards.find(c => c.id === cardId);
+  if (!card) return;
+  if (!confirm(`「${card.name}」を削除しますか？\nチェック履歴も全て削除されます。`)) return;
+
+  // カードを削除
+  appState.cards = appState.cards.filter(c => c.id !== cardId);
+
+  // 関連するチェックデータを削除
+  Object.keys(appState.checks).forEach(key => {
+    if (key.startsWith(cardId + '_')) delete appState.checks[key];
+  });
+
+  // 履歴から削除
+  appState.history = appState.history.filter(h => h.cardId !== cardId);
+
+  saveToLocal();
+  syncToGas();
+  renderSettingsCards();
+  renderMain();
+  showToast(`✓ ${card.name} を削除しました`);
+}
+
+function clearAllData() {
+  if (confirm('全データをリセットしますか？この操作は取り消せません。')) {
+    localStorage.removeItem('cardmgr_state');
+    location.reload();
+  }
+}
+
+// ═══════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════
+function showScreen(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+}
+
+function switchNav(tab) {
+  // Update all nav buttons
+  ['home', 'history', 'settings'].forEach(t => {
+    [1,2,3].forEach(n => {
+      const btn = document.getElementById(`nav-${t}${n === 1 ? '' : n}`);
+      if (btn) btn.classList.toggle('active', t === tab);
+    });
+  });
+  
+  switch(tab) {
+    case 'home':
+      showScreen('main-screen');
+      break;
+    case 'history':
+      renderHistory();
+      showScreen('history-screen');
+      break;
+    case 'settings':
+      renderGasStatus();
+      renderSettingsCards();
+      showScreen('settings-screen');
+      break;
+  }
+}
+
+// ═══════════════════════════════════════════
+// UTILITIES
+// ═══════════════════════════════════════════
+function formatDate(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function formatDateShort(dateStr) {
+  const d = new Date(dateStr);
+  return `${d.getMonth()+1}/${d.getDate()}`;
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
