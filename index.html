@@ -1360,12 +1360,30 @@ function showStep(stepId) {
   }
 }
 
-function saveGasUrl() {
+async function saveGasUrl() {
   const url = document.getElementById('gas-url-input').value.trim();
-  if (url) {
-    appState.settings.gasUrl = url;
-    saveToLocal();
-  }
+  if (!url) { showStep('step-cards'); return; }
+
+  appState.settings.gasUrl = url;
+  saveToLocal();
+
+  // GASに既存データがあれば復元してメイン画面へ
+  showToast('データを確認中...');
+  try {
+    const res = await fetch(url + '?action=getData');
+    const json = await res.json();
+    if (json.success && json.data && json.data.cards && json.data.cards.length > 0) {
+      appState = { ...appState, ...json.data };
+      appState.settings.gasUrl = url; // URLは上書きされないよう保持
+      saveToLocal();
+      showToast('✓ データを復元しました');
+      showScreen('main-screen');
+      renderMain();
+      return;
+    }
+  } catch(e) {}
+
+  // データなければ通常のカード選択へ
   showStep('step-cards');
 }
 
