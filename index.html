@@ -1128,6 +1128,14 @@ body {
     </div>
 
     <div class="settings-section">
+      <div class="settings-section-title">通知</div>
+      <div class="settings-row" onclick="subscribeToPush()">
+        <div class="settings-row-label">プッシュ通知を再登録</div>
+        <div class="settings-row-value">→</div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-section-title">データ保存</div>
       <div class="settings-row" onclick="editGasUrl()">
         <div class="settings-row-label">Google Apps Script</div>
@@ -1933,25 +1941,29 @@ async function requestNotifPermission() {
 }
 
 async function subscribeToPush() {
-  if (!firebaseMessaging || !appState.settings.gasUrl) return;
+  if (!firebaseMessaging) { showToast('Firebase未初期化'); return; }
+  if (!appState.settings.gasUrl) { showToast('GAS URL未設定'); return; }
   try {
+    showToast('トークン取得中...');
+    const swReg = await navigator.serviceWorker.ready;
     const token = await firebaseMessaging.getToken({
       vapidKey: 'BIZ-DCVcDF7u_o1zjIn-KW8jztRhsS2kOlClNZ_19IG2qm5n_xZJxn3Os431BxShQs1-F7z-HPOdffkn4y2N9v8',
-      serviceWorkerRegistration: await navigator.serviceWorker.ready
+      serviceWorkerRegistration: swReg
     });
     if (token) {
       appState.settings.fcmToken = token;
       saveToLocal();
-      // GASにトークンを保存
       await fetch(appState.settings.gasUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain' },
         body: JSON.stringify({ action: 'saveFcmToken', token })
       });
-      showToast('✓ プッシュ通知を登録しました');
+      showToast('✓ 通知を登録しました（' + token.slice(0,8) + '...）');
+    } else {
+      showToast('トークンが取得できませんでした');
     }
   } catch(e) {
-    showToast('通知の登録に失敗しました');
+    showToast('エラー: ' + e.message);
   }
 }
 
