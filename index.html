@@ -1947,7 +1947,7 @@ async function subscribeToPush() {
     showToast('トークン取得中...');
     const swReg = await navigator.serviceWorker.ready;
     const token = await firebaseMessaging.getToken({
-      vapidKey: 'BIZ-DCVcDF7u_o1zjIn-KW8jztRhsS2kOlClNZ_19IG2qm5n_xZJxn3Os431BxShQs1-F7z-HPOdffkn4y2N9v8',
+      vapidKey: 'BIZ-DCVcDF7u_o1zjln-KW8jztRhsS2k0lClNZ_19IG2qm5n_xZJxn3Os431BxShQs1-F7z-HPOdffkn4y2N9v8',
       serviceWorkerRegistration: swReg
     });
     if (token) {
