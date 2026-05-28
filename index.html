@@ -11,6 +11,8 @@
 <title>Card Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js"></script>
 <style>
 :root {
   --bg: #0a0a0f;
@@ -1279,9 +1281,12 @@ window.addEventListener('load', async () => {
     } catch(e) {}
   }
 
+  // Firebase初期化
+  initFirebase();
+
   // Load data
   loadFromLocal();
-  
+
   setTimeout(async () => {
     document.getElementById('loading').style.display = 'none';
     
@@ -1886,8 +1891,24 @@ function updateCurrentPeriodChecks() {
 }
 
 // ═══════════════════════════════════════════
-// NOTIFICATIONS
+// FIREBASE & NOTIFICATIONS
 // ═══════════════════════════════════════════
+let firebaseMessaging = null;
+
+function initFirebase() {
+  try {
+    const app = firebase.initializeApp({
+      apiKey: "AIzaSyDj84BQGXGOC3327yDcThvIRKI2z94o-Vo",
+      authDomain: "card-manager-b9a2f.firebaseapp.com",
+      projectId: "card-manager-b9a2f",
+      storageBucket: "card-manager-b9a2f.firebasestorage.app",
+      messagingSenderId: "334509208344",
+      appId: "1:334509208344:web:80f3c6343325c6b283246d"
+    });
+    firebaseMessaging = firebase.messaging(app);
+  } catch(e) {}
+}
+
 function checkNotifPermission() {
   if ('Notification' in window && Notification.permission === 'default') {
     document.getElementById('notif-banner').style.display = 'flex';
@@ -1899,53 +1920,50 @@ async function requestNotifPermission() {
     showToast('このブラウザは通知に対応していません');
     return;
   }
-  
   const permission = await Notification.requestPermission();
-  appState.settings.notifPermission = permission;
-  saveToLocal();
-  
   if (permission === 'granted') {
     document.getElementById('notif-banner').style.display = 'none';
     showToast('✓ 通知が有効になりました');
-    scheduleNotifications();
+    await subscribeToPush();
   } else {
     showToast('通知が拒否されました');
+  }
+  appState.settings.notifPermission = permission;
+  saveToLocal();
+}
+
+async function subscribeToPush() {
+  if (!firebaseMessaging || !appState.settings.gasUrl) return;
+  try {
+    const token = await firebaseMessaging.getToken({
+      vapidKey: 'BIZ-DCVcDF7u_o1zjIn-KW8jztRhsS2kOlClNZ_19IG2qm5n_xZJxn3Os431BxShQs1-F7z-HPOdffkn4y2N9v8',
+      serviceWorkerRegistration: await navigator.serviceWorker.ready
+    });
+    if (token) {
+      appState.settings.fcmToken = token;
+      saveToLocal();
+      // GASにトークンを保存
+      await fetch(appState.settings.gasUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify({ action: 'saveFcmToken', token })
+      });
+      showToast('✓ プッシュ通知を登録しました');
+    }
+  } catch(e) {
+    showToast('通知の登録に失敗しました');
   }
 }
 
 function checkNotifications() {
   checkNotifPermission();
-  if (Notification.permission === 'granted') {
-    scheduleNotifications();
+  if (Notification.permission === 'granted' && !appState.settings.fcmToken) {
+    subscribeToPush();
   }
 }
 
 function scheduleNotifications() {
-  const allUrgent = [];
-  appState.cards.forEach(card => {
-    allUrgent.push(...getUrgentBenefitsForCard(card));
-  });
-  
-  if (allUrgent.length > 0 && 'serviceWorker' in navigator) {
-    navigator.serviceWorker.ready.then(reg => {
-      // Schedule daily check via setTimeout (re-triggers on app open)
-      allUrgent.forEach(benefit => {
-        reg.showNotification('CardMgr — 期限が近い特典', {
-          body: `${benefit.cardName}: ${benefit.name} — 残${benefit.daysLeft}日`,
-          icon: './icon-192.png',
-          tag: `${benefit.cardName}-${benefit.id}`,
-          requireInteraction: true
-        });
-      });
-    });
-  }
-  
-  // Re-check tomorrow
-  const tomorrow = new Date();
-  tomorrow.setHours(9, 0, 0, 0);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const msUntilTomorrow = tomorrow - new Date();
-  setTimeout(scheduleNotifications, msUntilTomorrow);
+  // Firebase経由でバックグラウンド通知するため、ここでは何もしない
 }
 
 // ═══════════════════════════════════════════
