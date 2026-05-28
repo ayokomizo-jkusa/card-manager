@@ -1,5 +1,5 @@
-const CACHE_NAME = 'card-manager-v2';
-const urlsToCache = ['/', '/index.html'];
+const CACHE_NAME = 'card-manager-v3';
+const urlsToCache = ['./index.html'];
 
 self.addEventListener('install', event => {
   event.waitUntil(
@@ -36,7 +36,7 @@ self.addEventListener('notificationclick', event => {
       for (const client of clientList) {
         if (client.url && 'focus' in client) return client.focus();
       }
-      if (clients.openWindow) return clients.openWindow('/index.html');
+      if (clients.openWindow) return clients.openWindow('./index.html');
     })
   );
 });
