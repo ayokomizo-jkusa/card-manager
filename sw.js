@@ -1,8 +1,8 @@
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.12.0/firebase-messaging-compat.js');
 
-const CACHE_NAME = 'card-manager-v5';
-const urlsToCache = ['./index.html'];
+const CACHE_NAME = 'card-manager-v6';
+const urlsToCache = [];
 
 // Firebase初期化
 firebase.initializeApp({
@@ -47,11 +47,9 @@ self.addEventListener('activate', event => {
   self.clients.claim();
 });
 
-// フェッチ（キャッシュ優先）
+// フェッチ（常にネットワークから取得）
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(res => res || fetch(event.request))
-  );
+  event.respondWith(fetch(event.request).catch(() => caches.match(event.request)));
 });
 
 // 通知タップでアプリを開く
